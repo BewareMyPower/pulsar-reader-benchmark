@@ -22,11 +22,12 @@ public class Main {
         final int numMessages = args.length > 1 ? Integer.parseInt(args[0]) : 10;
         final var topic = args.length > 2 ? args[1] : "my-topic";
         System.out.println("Topic: " + topic + ", numMessages: " + numMessages);
-        final var produceResult = PrepareData.run(topic, numMessages);
-        System.out.println("Initial data: " + Benchmark.mapToString(produceResult));
-
         final var benchmark = new Benchmark();
         final var client = PulsarClient.builder().serviceUrl("pulsar://localhost:6650").build();
+
+        final var produceResult = PrepareData.run(client, topic, numMessages);
+        System.out.println("Initial data: " + Benchmark.mapToString(produceResult));
+
         final var readersMap = new HashMap<String, KeyValueReader>();
         readersMap.put("readNextAsync", new ReadNextAsync(client));
         readersMap.put("readNext", new ReadNext(client));

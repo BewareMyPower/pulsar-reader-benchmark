@@ -15,22 +15,25 @@ package io.bewaremypower.pulsar;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import org.apache.pulsar.client.api.PulsarClient;
-import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 
 public class PrepareData {
 
-    public static Map<String, Integer> run(String topic, int numMessages) throws PulsarClientException {
-        try (var client = PulsarClient.builder().serviceUrl("pulsar://localhost:6650").build();
-             var producer = client.newProducer(Schema.INT32).topic(topic).create()) {
+    public static Map<String, Integer> run(PulsarClient client, String topic, int numMessages)
+            throws Exception {
+        try (var producer = client.newProducer(Schema.INT32).topic(topic)
+                .enableBatching(false).create()) {
             final String[] keys = { "A", "B", "C", "D" };
             final var map = new HashMap<String, Integer>();
+            final var latch = new CountDownLatch(numMessages);
             for (int i = 0; i < numMessages; i++) {
                 final var key = keys[i % keys.length];
-                producer.newMessage().key(key).value(i).send();
+                producer.newMessage().key(key).value(i).sendAsync().thenAccept(__ -> latch.countDown());
                 map.put(key, i);
             }
+            latch.await();
             return map;
         }
     }

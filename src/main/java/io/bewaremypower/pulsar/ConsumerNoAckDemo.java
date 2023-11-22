@@ -48,10 +48,10 @@ public class ConsumerNoAckDemo implements KeyValueReader {
                     System.err.println("Received message for " + msg.getTopicName() + ", which is not contained by "
                             + topicToMsgId.keySet());
                 }
+                map.put(msg.getKey(), msg.getValue());
                 if (msg.getMessageId().compareTo(topicToMsgId.get(msg.getTopicName())) >= 0) {
                     break;
                 }
-                map.put(msg.getKey(), msg.getValue());
             }
             return map;
         }
