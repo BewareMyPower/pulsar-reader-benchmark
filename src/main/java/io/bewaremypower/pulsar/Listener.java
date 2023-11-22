@@ -25,12 +25,10 @@ import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionMode;
 import org.apache.pulsar.shade.org.apache.commons.codec.digest.DigestUtils;
 
-public class Listener implements KeyValueReader {
+public class Listener extends AbstractKeyValueReader {
 
-    private final PulsarClient client;
-
-    public Listener(PulsarClient client) {
-        this.client = client;
+    public Listener(PulsarClient client, int queueSize) {
+        super(client, queueSize);
     }
 
     @Override
@@ -44,6 +42,7 @@ public class Listener implements KeyValueReader {
                     map.put(msg.getKey(), msg.getValue());
                     msgId.set(msg.getMessageId());
                 })
+                .receiverQueueSize(queueSize)
                 .subscriptionMode(SubscriptionMode.NonDurable).subscribe()) {
             final var msgIds = consumer.getLastMessageIds();
             if (msgIds.size() != 1) {

@@ -21,17 +21,16 @@ import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Reader;
 import org.apache.pulsar.client.api.Schema;
 
-public class ReadNextAsync implements KeyValueReader {
+public class ReadNextAsync extends AbstractKeyValueReader {
 
-    private final PulsarClient client;
-
-    public ReadNextAsync(PulsarClient client) {
-        this.client = client;
+    public ReadNextAsync(PulsarClient client, int queueSize) {
+        super(client, queueSize);
     }
 
     @Override
     public Map<String, Integer> read(String topic) throws Exception {
         try (var reader = client.newReader(Schema.INT32).topic(topic).startMessageId(MessageId.earliest)
+                .receiverQueueSize(queueSize)
                 .readCompacted(true).create()) {
             final var future = new CompletableFuture<Void>();
             final var map = new HashMap<String, Integer>();

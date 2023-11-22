@@ -22,12 +22,11 @@ import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionMode;
 import org.apache.pulsar.shade.org.apache.commons.codec.digest.DigestUtils;
 
-public class ConsumerNoAckDemo implements KeyValueReader {
+public class ConsumerNoAckDemo extends AbstractKeyValueReader {
 
-    private final PulsarClient client;
 
-    public ConsumerNoAckDemo(PulsarClient client) {
-        this.client = client;
+    public ConsumerNoAckDemo(PulsarClient client, int queueSize) {
+        super(client, queueSize);
     }
 
     @Override
@@ -35,6 +34,7 @@ public class ConsumerNoAckDemo implements KeyValueReader {
         try (final var consumer = client.newConsumer(Schema.INT32).topic(topic)
                 .subscriptionName("reader-" + DigestUtils.sha1Hex(UUID.randomUUID().toString()).substring(0, 10))
                 .subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)
+                .receiverQueueSize(queueSize)
                 .subscriptionMode(SubscriptionMode.NonDurable).subscribe()) {
             final var msgIds = consumer.getLastMessageIds();
             if (msgIds.size() != 1) {

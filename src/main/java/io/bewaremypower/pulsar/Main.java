@@ -21,6 +21,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
         final int numMessages = args.length > 1 ? Integer.parseInt(args[0]) : 10;
         final var topic = args.length > 2 ? args[1] : "my-topic";
+        final var queueSize = args.length > 3 ? Integer.parseInt(args[2]) : 1000;
         System.out.println("Topic: " + topic + ", numMessages: " + numMessages);
         final var benchmark = new Benchmark();
         final var client = PulsarClient.builder().serviceUrl("pulsar://localhost:6650").build();
@@ -29,10 +30,10 @@ public class Main {
         System.out.println("Initial data: " + Benchmark.mapToString(produceResult));
 
         final var readersMap = new HashMap<String, KeyValueReader>();
-        readersMap.put("readNextAsync", new ReadNextAsync(client));
-        readersMap.put("readNext", new ReadNext(client));
-        readersMap.put("ConsumerNoAck", new ConsumerNoAckDemo(client));
-        readersMap.put("Listener", new Listener(client));
+        readersMap.put("readNextAsync", new ReadNextAsync(client, queueSize));
+        readersMap.put("readNext", new ReadNext(client, queueSize));
+        readersMap.put("ConsumerNoAck", new ConsumerNoAckDemo(client, queueSize));
+        readersMap.put("Listener", new Listener(client, queueSize));
         for (int i = 0; i < 5; i++) {
             final int index = i;
             readersMap.forEach((name, reader) -> {

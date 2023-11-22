@@ -21,12 +21,10 @@ import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 
-public class ReadNext implements KeyValueReader {
+public class ReadNext extends AbstractKeyValueReader {
 
-    private final PulsarClient client;
-
-    public ReadNext(PulsarClient client) {
-        this.client = client;
+    public ReadNext(PulsarClient client, int queueSize) {
+        super(client, queueSize);
     }
 
     @Override
@@ -35,6 +33,7 @@ public class ReadNext implements KeyValueReader {
         final var result = executor.submit(() -> {
             try {
                 final var reader = client.newReader(Schema.INT32).topic(topic)
+                        .receiverQueueSize(queueSize)
                         .startMessageId(MessageId.earliest).readCompacted(true).create();
                 final var map = new HashMap<String, Integer>();
                 while (reader.hasMessageAvailable()) {
