@@ -28,6 +28,8 @@ public class Main {
             System.out.println(i + " readNextAsync: " + elapsed + "ms");
             elapsed = benchmark.run("readNext", () -> ReadNext.read(topic), produceResult);
             System.out.println(i + " readNext: " + elapsed + "ms");
+            elapsed = benchmark.run("ConsumerNoAck", () -> ConsumerNoAckDemo.read(topic), produceResult);
+            System.out.println(i + " ConsumerNoAck: " + elapsed + "ms");
         }
         benchmark.print();
     }
