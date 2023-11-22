@@ -13,22 +13,26 @@
  */
 package io.bewaremypower.pulsar;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Reader;
 import org.apache.pulsar.client.api.Schema;
 
-public class ReadNextAsync {
+public class ReadNextAsync implements KeyValueReader {
 
-    public static Map<String, Integer> read(String topic) throws IOException, ExecutionException, InterruptedException {
-        try (var client = PulsarClient.builder().serviceUrl("pulsar://localhost:6650").build();
-             var reader = client.newReader(Schema.INT32).topic(topic)
-                     .startMessageId(MessageId.earliest).readCompacted(true).create()) {
+    private final PulsarClient client;
+
+    public ReadNextAsync(PulsarClient client) {
+        this.client = client;
+    }
+
+    @Override
+    public Map<String, Integer> read(String topic) throws Exception {
+        try (var reader = client.newReader(Schema.INT32).topic(topic).startMessageId(MessageId.earliest)
+                .readCompacted(true).create()) {
             final var future = new CompletableFuture<Void>();
             final var map = new HashMap<String, Integer>();
             readToLatest(reader, future, map);

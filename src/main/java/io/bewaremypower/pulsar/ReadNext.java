@@ -13,37 +13,40 @@
  */
 package io.bewaremypower.pulsar;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 
-public class ReadNext {
+public class ReadNext implements KeyValueReader {
 
-    public static Map<String, Integer> read(String topic) throws IOException, ExecutionException, InterruptedException {
+    private final PulsarClient client;
+
+    public ReadNext(PulsarClient client) {
+        this.client = client;
+    }
+
+    @Override
+    public Map<String, Integer> read(String topic) throws Exception {
         final var executor = Executors.newSingleThreadExecutor();
-        try (var client = PulsarClient.builder().serviceUrl("pulsar://localhost:6650").build()) {
-            return executor.submit(() -> {
-                try {
-                    final var reader = client.newReader(Schema.INT32).topic(topic)
-                            .startMessageId(MessageId.earliest).readCompacted(true).create();
-                    final var map = new HashMap<String, Integer>();
-                    while (reader.hasMessageAvailable()) {
-                        final var msg = reader.readNext();
-                        map.put(msg.getKey(), msg.getValue());
-                    }
-                    return map;
-                } catch (PulsarClientException e) {
-                    throw new RuntimeException(e);
+        final var result = executor.submit(() -> {
+            try {
+                final var reader = client.newReader(Schema.INT32).topic(topic)
+                        .startMessageId(MessageId.earliest).readCompacted(true).create();
+                final var map = new HashMap<String, Integer>();
+                while (reader.hasMessageAvailable()) {
+                    final var msg = reader.readNext();
+                    map.put(msg.getKey(), msg.getValue());
                 }
-            }).get();
-        } finally {
-            executor.shutdown();
-        }
+                return map;
+            } catch (PulsarClientException e) {
+                throw new RuntimeException(e);
+            }
+        }).get();
+        executor.shutdown();
+        return result;
     }
 }

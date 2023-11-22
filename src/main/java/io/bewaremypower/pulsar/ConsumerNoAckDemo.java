@@ -13,7 +13,6 @@
  */
 package io.bewaremypower.pulsar;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -25,14 +24,20 @@ import org.apache.pulsar.client.api.SubscriptionMode;
 import org.apache.pulsar.common.naming.TopicName;
 import org.apache.pulsar.shade.org.apache.commons.codec.digest.DigestUtils;
 
-public class ConsumerNoAckDemo {
+public class ConsumerNoAckDemo implements KeyValueReader {
 
-    public static Map<String, Integer> read(String topic) throws IOException {
-        try (var client = PulsarClient.builder().serviceUrl("pulsar://localhost:6650").build()) {
-            final var consumer = client.newConsumer(Schema.INT32).topic(topic)
-                    .subscriptionName("reader-" + DigestUtils.sha1Hex(UUID.randomUUID().toString()).substring(0, 10))
-                    .subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)
-                    .subscriptionMode(SubscriptionMode.NonDurable).subscribe();
+    private final PulsarClient client;
+
+    public ConsumerNoAckDemo(PulsarClient client) {
+        this.client = client;
+    }
+
+    @Override
+    public Map<String, Integer> read(String topic) throws Exception {
+        try (final var consumer = client.newConsumer(Schema.INT32).topic(topic)
+                .subscriptionName("reader-" + DigestUtils.sha1Hex(UUID.randomUUID().toString()).substring(0, 10))
+                .subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)
+                .subscriptionMode(SubscriptionMode.NonDurable).subscribe()) {
             final var msgIds = consumer.getLastMessageIds();
             final var topicToMsgId = new HashMap<String, MessageId>();
             msgIds.forEach(msgId -> topicToMsgId.put(TopicName.get(msgId.getOwnerTopic()).toString(), msgId));

@@ -13,6 +13,9 @@
  */
 package io.bewaremypower.pulsar;
 
+import java.util.HashMap;
+import org.apache.pulsar.client.api.PulsarClient;
+
 public class Main {
 
     public static void main(String[] args) throws Exception {
@@ -23,15 +26,24 @@ public class Main {
         System.out.println("Initial data: " + Benchmark.mapToString(produceResult));
 
         final var benchmark = new Benchmark();
-        for (int i = 0; i < 3; i++) {
-            long elapsed = benchmark.run("readNextAsync", () -> ReadNextAsync.read(topic), produceResult);
-            System.out.println(i + " readNextAsync: " + elapsed + "ms");
-            elapsed = benchmark.run("readNext", () -> ReadNext.read(topic), produceResult);
-            System.out.println(i + " readNext: " + elapsed + "ms");
-            elapsed = benchmark.run("ConsumerNoAck", () -> ConsumerNoAckDemo.read(topic), produceResult);
-            System.out.println(i + " ConsumerNoAck: " + elapsed + "ms");
+        final var client = PulsarClient.builder().serviceUrl("pulsar://localhost:6650").build();
+        final var readersMap = new HashMap<String, KeyValueReader>();
+        readersMap.put("readNextAsync", new ReadNextAsync(client));
+        readersMap.put("readNext", new ReadNext(client));
+        readersMap.put("ConsumerNoAck", new ConsumerNoAckDemo(client));
+        for (int i = 0; i < 5; i++) {
+            final int index = i;
+            readersMap.forEach((name, reader) -> {
+                try {
+                    final var elapsed = benchmark.run(name, reader, topic, produceResult);
+                    System.out.println(index + " " + name + ": " + elapsed + "ms");
+                } catch (Exception e) {
+                    System.err.println("Failed to run " + name + ": " + e.getMessage());
+                }
+            });
         }
         benchmark.print();
+        client.close();
     }
 
 }

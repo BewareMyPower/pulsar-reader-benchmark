@@ -17,16 +17,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 public class Benchmark {
 
     private final Map<String, List<Long>> results = new HashMap<>();
 
-    public long run(String name, Callable<Map<String, Integer>> callable, Map<String, Integer> expectedResult)
+    public long run(String name, KeyValueReader reader, String topic, Map<String, Integer> expectedResult)
             throws Exception {
         final var start = System.currentTimeMillis();
-        final var result = callable.call();
+        final var result = reader.read(topic);
         final var elapsed = System.currentTimeMillis() - start;
         if (!result.equals(expectedResult)) {
             System.out.println("Result: " + mapToString(result) + ", expected: " + mapToString(result));
