@@ -32,6 +32,7 @@ public class Main {
         readersMap.put("readNextAsync", new ReadNextAsync(client));
         readersMap.put("readNext", new ReadNext(client));
         readersMap.put("ConsumerNoAck", new ConsumerNoAckDemo(client));
+        readersMap.put("Listener", new Listener(client));
         for (int i = 0; i < 5; i++) {
             final int index = i;
             readersMap.forEach((name, reader) -> {
