@@ -16,12 +16,10 @@ package io.bewaremypower.pulsar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionMode;
-import org.apache.pulsar.common.naming.TopicName;
 import org.apache.pulsar.shade.org.apache.commons.codec.digest.DigestUtils;
 
 public class ConsumerNoAckDemo implements KeyValueReader {
@@ -39,17 +37,15 @@ public class ConsumerNoAckDemo implements KeyValueReader {
                 .subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)
                 .subscriptionMode(SubscriptionMode.NonDurable).subscribe()) {
             final var msgIds = consumer.getLastMessageIds();
-            final var topicToMsgId = new HashMap<String, MessageId>();
-            msgIds.forEach(msgId -> topicToMsgId.put(TopicName.get(msgId.getOwnerTopic()).toString(), msgId));
+            if (msgIds.size() > 1) {
+                throw new IllegalStateException("getLastMessageIds returns " + msgIds.size() + " topics");
+            }
+            final var lastMsgId = msgIds.get(0);
             final var map = new HashMap<String, Integer>();
             while (true) {
                 final var msg = consumer.receive();
-                if (!topicToMsgId.containsKey(msg.getTopicName())) {
-                    System.err.println("Received message for " + msg.getTopicName() + ", which is not contained by "
-                            + topicToMsgId.keySet());
-                }
                 map.put(msg.getKey(), msg.getValue());
-                if (msg.getMessageId().compareTo(topicToMsgId.get(msg.getTopicName())) >= 0) {
+                if (msg.getMessageId().compareTo(lastMsgId) >= 0) {
                     break;
                 }
             }
