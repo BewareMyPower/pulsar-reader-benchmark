@@ -28,7 +28,7 @@ public class Benchmark {
         final var result = reader.read(topic);
         final var elapsed = System.currentTimeMillis() - start;
         if (!result.equals(expectedResult)) {
-            System.out.println("Result: " + mapToString(result) + ", expected: " + mapToString(result));
+            System.out.println("Result: " + mapToString(result) + ", expected: " + mapToString(expectedResult));
         }
         results.computeIfAbsent(name, __ -> new ArrayList<>()).add(elapsed);
         return elapsed;
